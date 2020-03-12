@@ -1,23 +1,23 @@
 {
   "schemaVersion": 1,
-  "id": "starter",
+  "id": "endershulkers",
   "version": "${version}",
 
-  "name": "Fabric Starter",
-  "icon": "assets/starter/icon.png",
-  "description": "Template for starting out Fabric mods",
+  "name": "Ender Shulkers",
+  "icon": "assets/endershulkers/icon.png",
+  "description": "Ender shulker boxes",
   "license": "MIT",
   "contact": {
-    "sources": "https://github.com/CottonMC/FabricStarter"
+    "sources": "https://github.com/Boundarybreaker/EnderShulkers"
   },
   "environment": "*",
   "entrypoints": {
     "main": [
-      "io.github.cottonmc.starter.FabricStarter"
+      "space.bbkr.endershulkers.EnderShulkers"
     ]
   },
   "mixins": [
-    "mixins.starter.json"
+    "mixins.endershulkers.json"
   ],
   "depends": {
     "fabricloader": ">=0.4.0"
