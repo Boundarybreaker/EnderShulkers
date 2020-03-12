@@ -1,6 +1,5 @@
 package space.bbkr.endershulkers.inventory;
 
-import net.minecraft.block.entity.EnderChestBlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.BasicInventory;
 import net.minecraft.item.ItemStack;

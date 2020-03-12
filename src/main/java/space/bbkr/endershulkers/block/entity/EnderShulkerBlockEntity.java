@@ -14,6 +14,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Tickable;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.shape.VoxelShapes;
 import space.bbkr.endershulkers.EnderShulkers;
@@ -26,8 +27,8 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 	public int viewerCount;
 	private ShulkerBoxBlockEntity.AnimationStage animationStage;
 
-	public EnderShulkerBlockEntity(BlockEntityType<?> type) {
-		super(type);
+	public EnderShulkerBlockEntity() {
+		super(EnderShulkers.ENDER_SHULKER_BLOCK_ENTITY);
 	}
 
 	public void tick() {
@@ -178,6 +179,10 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 		} else {
 			return playerEntity.squaredDistanceTo((double)this.pos.getX() + 0.5D, (double)this.pos.getY() + 0.5D, (double)this.pos.getZ() + 0.5D) <= 64.0D;
 		}
+	}
+
+	public float getAnimationProgress(float f) {
+		return MathHelper.lerp(f, this.prevAnimationProgress, this.animationProgress);
 	}
 
 	@Override
