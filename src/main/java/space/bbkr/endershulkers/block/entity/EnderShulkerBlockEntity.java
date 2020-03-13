@@ -14,6 +14,8 @@ import net.minecraft.entity.MovementType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Tickable;
@@ -145,28 +147,28 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 	}
 
 	@Override
-	public boolean onBlockAction(int i, int j) {
-		if (i == 1) {
-			this.viewerCount = j;
-			if (j == 0) {
+	public boolean onBlockAction(int type, int data) {
+		if (type == 1) {
+			this.viewerCount = data;
+			if (data == 0) {
 				this.animationStage = ShulkerBoxBlockEntity.AnimationStage.CLOSING;
 				this.updateNeighborStates();
 			}
 
-			if (j == 1) {
+			if (data == 1) {
 				this.animationStage = ShulkerBoxBlockEntity.AnimationStage.OPENING;
 				this.updateNeighborStates();
 			}
 
 			return true;
 		} else {
-			return super.onBlockAction(i, j);
+			return super.onBlockAction(type, data);
 		}
 	}
 
 	private void updateNeighborStates() {
 		this.getCachedState().updateNeighborStates(this.getWorld(), this.getPos(), 3);
-		sync();
+		if (!world.isClient) sync();
 	}
 
 	public void markRemoved() {
@@ -177,11 +179,13 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 	public void onOpen() {
 		++this.viewerCount;
 		this.world.addBlockAction(this.pos, EnderShulkers.ENDER_SHULKER_BLOCK, 1, this.viewerCount);
+		world.playSound(null, getPos(), SoundEvents.BLOCK_SHULKER_BOX_OPEN, SoundCategory.BLOCKS, 1f, 1f);
 	}
 
 	public void onClose() {
 		--this.viewerCount;
 		this.world.addBlockAction(this.pos, EnderShulkers.ENDER_SHULKER_BLOCK, 1, this.viewerCount);
+		world.playSound(null, getPos(), SoundEvents.BLOCK_SHULKER_BOX_CLOSE, SoundCategory.BLOCKS, 1f, 1f);
 	}
 
 	public boolean canPlayerUse(PlayerEntity playerEntity) {

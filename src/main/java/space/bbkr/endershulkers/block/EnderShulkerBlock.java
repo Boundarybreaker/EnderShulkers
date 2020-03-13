@@ -67,20 +67,21 @@ public class EnderShulkerBlock extends BlockWithEntity implements InventoryProvi
 		} else if (player.isSpectator()) {
 			return ActionResult.SUCCESS;
 		} else {
-			BlockEntity blockEntity = world.getBlockEntity(pos);
-			if (blockEntity instanceof EnderShulkerBlockEntity) {
+			BlockEntity be = world.getBlockEntity(pos);
+			if (be instanceof EnderShulkerBlockEntity) {
 				Direction direction = state.get(FACING);
-				EnderShulkerBlockEntity shulkerBoxBlockEntity = (EnderShulkerBlockEntity)blockEntity;
-				boolean bl2;
-				if (shulkerBoxBlockEntity.getAnimationStage() == ShulkerBoxBlockEntity.AnimationStage.CLOSED) {
+				EnderShulkerBlockEntity shulker = (EnderShulkerBlockEntity)be;
+				boolean canOpen;
+				if (shulker.getAnimationStage() == ShulkerBoxBlockEntity.AnimationStage.CLOSED) {
 					Box box = VoxelShapes.fullCube().getBoundingBox().stretch(0.5F * (float)direction.getOffsetX(), 0.5F * (float)direction.getOffsetY(), 0.5F * (float)direction.getOffsetZ()).shrink(direction.getOffsetX(), direction.getOffsetY(), direction.getOffsetZ());
-					bl2 = world.doesNotCollide(box.offset(pos.offset(direction)));
+					canOpen = world.doesNotCollide(box.offset(pos.offset(direction)));
 				} else {
-					bl2 = true;
+					canOpen = true;
 				}
 
-				if (bl2) {
-					player.openContainer(shulkerBoxBlockEntity);
+				if (canOpen) {
+					EnderShulkers.ENDER_SHULKER_COMPONENT.get(world.getLevelProperties()).getInventory(shulker.getChannel()).setCurrentBlockEntity(shulker);
+					player.openContainer(shulker);
 					player.incrementStat(Stats.OPEN_SHULKER_BOX);
 				}
 
