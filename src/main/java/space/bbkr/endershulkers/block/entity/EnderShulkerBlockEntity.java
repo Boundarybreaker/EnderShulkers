@@ -4,13 +4,18 @@ import net.fabricmc.fabric.api.block.entity.BlockEntityClientSerializable;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.block.entity.ShulkerBoxBlockEntity;
 import net.minecraft.block.piston.PistonBehavior;
+import net.minecraft.container.Container;
+import net.minecraft.container.NameableContainerFactory;
+import net.minecraft.container.ShulkerBoxContainer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.MovementType;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 import net.minecraft.util.Tickable;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
@@ -19,13 +24,15 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.shape.VoxelShapes;
 import space.bbkr.endershulkers.EnderShulkers;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
-public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, BlockEntityClientSerializable {
+public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, BlockEntityClientSerializable, NameableContainerFactory {
 	public float animationProgress;
 	public float prevAnimationProgress;
 	public int viewerCount;
-	private ShulkerBoxBlockEntity.AnimationStage animationStage;
+	private ShulkerBoxBlockEntity.AnimationStage animationStage = ShulkerBoxBlockEntity.AnimationStage.CLOSED;
+	private int channel;
 
 	public EnderShulkerBlockEntity() {
 		super(EnderShulkers.ENDER_SHULKER_BLOCK_ENTITY);
@@ -33,6 +40,9 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 
 	public void tick() {
 		this.updateAnimation();
+		if (this.animationStage == ShulkerBoxBlockEntity.AnimationStage.OPENING || this.animationStage == ShulkerBoxBlockEntity.AnimationStage.CLOSING) {
+			this.pushEntities();
+		}
 
 	}
 
@@ -70,28 +80,28 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 	}
 
 	public Box getBoundingBox(BlockState state) {
-		return this.getBoundingBox((Direction)state.get(ShulkerBoxBlock.FACING));
+		return this.getBoundingBox(state.get(ShulkerBoxBlock.FACING));
 	}
 
 	public Box getBoundingBox(Direction openDirection) {
 		float f = this.getAnimationProgress(1.0F);
-		return VoxelShapes.fullCube().getBoundingBox().stretch((double)(0.5F * f * (float)openDirection.getOffsetX()), (double)(0.5F * f * (float)openDirection.getOffsetY()), (double)(0.5F * f * (float)openDirection.getOffsetZ()));
+		return VoxelShapes.fullCube().getBoundingBox().stretch(0.5F * f * (float)openDirection.getOffsetX(), 0.5F * f * (float)openDirection.getOffsetY(), 0.5F * f * (float)openDirection.getOffsetZ());
 	}
 
 	private Box getCollisionBox(Direction facing) {
 		Direction direction = facing.getOpposite();
-		return this.getBoundingBox(facing).shrink((double)direction.getOffsetX(), (double)direction.getOffsetY(), (double)direction.getOffsetZ());
+		return this.getBoundingBox(facing).shrink(direction.getOffsetX(), direction.getOffsetY(), direction.getOffsetZ());
 	}
 
 	private void pushEntities() {
 		BlockState blockState = this.world.getBlockState(this.getPos());
 		if (blockState.getBlock() instanceof ShulkerBoxBlock) {
-			Direction direction = (Direction)blockState.get(ShulkerBoxBlock.FACING);
+			Direction direction = blockState.get(ShulkerBoxBlock.FACING);
 			Box box = this.getCollisionBox(direction).offset(this.pos);
-			List<Entity> list = this.world.getEntities((Entity)null, box);
+			List<Entity> list = this.world.getEntities(null, box);
 			if (!list.isEmpty()) {
 				for(int i = 0; i < list.size(); ++i) {
-					Entity entity = (Entity)list.get(i);
+					Entity entity = list.get(i);
 					if (entity.getPistonBehavior() != PistonBehavior.IGNORE) {
 						double d = 0.0D;
 						double e = 0.0D;
@@ -156,6 +166,7 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 
 	private void updateNeighborStates() {
 		this.getCachedState().updateNeighborStates(this.getWorld(), this.getPos(), 3);
+		sync();
 	}
 
 	public void markRemoved() {
@@ -185,13 +196,48 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 		return MathHelper.lerp(f, this.prevAnimationProgress, this.animationProgress);
 	}
 
+	public int getChannel() {
+		return channel;
+	}
+
+	public void setChannel(int channel) {
+		this.channel = channel;
+	}
+
+	@Override
+	public void fromTag(CompoundTag tag) {
+		super.fromTag(tag);
+		channel = tag.getInt("Channel");
+	}
+
+	@Override
+	public CompoundTag toTag(CompoundTag tag) {
+		super.toTag(tag);
+		tag.putInt("Channel", channel);
+		return tag;
+	}
+
 	@Override
 	public void fromClientTag(CompoundTag tag) {
 		fromTag(tag);
+		viewerCount = tag.getInt("ViewerCount");
 	}
 
 	@Override
 	public CompoundTag toClientTag(CompoundTag tag) {
-		return toTag(tag);
+		toTag(tag);
+		tag.putInt("ViewerCount", viewerCount);
+		return tag;
+	}
+
+	@Override
+	public Text getDisplayName() {
+		return new LiteralText("");
+	}
+
+	@Nullable
+	@Override
+	public Container createMenu(int syncId, PlayerInventory inv, PlayerEntity player) {
+		return new ShulkerBoxContainer(syncId, inv, EnderShulkers.ENDER_SHULKER_COMPONENT.get(world.getLevelProperties()).getInventory(getChannel()));
 	}
 }

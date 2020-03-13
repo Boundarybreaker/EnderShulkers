@@ -6,6 +6,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import space.bbkr.endershulkers.block.entity.EnderShulkerBlockEntity;
+import space.bbkr.endershulkers.component.EnderShulkerComponent;
 
 public class EnderShulkerInventory extends BasicInventory {
 	private EnderShulkerBlockEntity currentBlockEntity;
@@ -69,5 +70,11 @@ public class EnderShulkerInventory extends BasicInventory {
 
 		super.onInvClose(player);
 		this.currentBlockEntity = null;
+	}
+
+	@Override
+	public void markDirty() {
+		super.markDirty();
+		EnderShulkerComponent.INSTANCE.sync();
 	}
 }
