@@ -2,13 +2,17 @@ package space.bbkr.endershulkers.inventory;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.BasicInventory;
+import net.minecraft.inventory.SidedInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.util.math.Direction;
 import space.bbkr.endershulkers.block.entity.EnderShulkerBlockEntity;
 import space.bbkr.endershulkers.component.EnderShulkerComponent;
 
-public class EnderShulkerInventory extends BasicInventory {
+import javax.annotation.Nullable;
+
+public class EnderShulkerInventory extends BasicInventory implements SidedInventory {
 	private EnderShulkerBlockEntity currentBlockEntity;
 
 	public EnderShulkerInventory() {
@@ -76,5 +80,24 @@ public class EnderShulkerInventory extends BasicInventory {
 	public void markDirty() {
 		super.markDirty();
 		EnderShulkerComponent.INSTANCE.sync();
+	}
+
+	@Override
+	public int[] getInvAvailableSlots(Direction side) {
+		int[] ret = new int[27];
+		for (int i = 0; i < 27; i++) {
+			ret[i] = i;
+		}
+		return ret;
+	}
+
+	@Override
+	public boolean canInsertInvStack(int slot, ItemStack stack, @Nullable Direction dir) {
+		return true;
+	}
+
+	@Override
+	public boolean canExtractInvStack(int slot, ItemStack stack, Direction dir) {
+		return true;
 	}
 }

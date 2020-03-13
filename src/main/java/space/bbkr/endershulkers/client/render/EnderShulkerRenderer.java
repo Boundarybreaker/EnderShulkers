@@ -1,6 +1,5 @@
 package space.bbkr.endershulkers.client.render;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.TexturedRenderLayers;
@@ -48,12 +47,10 @@ public class EnderShulkerRenderer extends BlockEntityRenderer<EnderShulkerBlockE
 		float r = (color >> 16 & 255) / 255f;
 		float g = (color >> 8 & 255) / 255f;
 		float b = (color & 255) / 255f;
-		RenderSystem.color4f(r, g, b, 1);
-		this.model.getBottomShell().render(matrixStack, vertexConsumer, i, j);
+		this.model.getBottomShell().render(matrixStack, vertexConsumer, i, j, r, g, b, 1f);
 		matrixStack.translate(0.0D, -shulkerBoxBlockEntity.getAnimationProgress(f) * 0.5F, 0.0D);
 		matrixStack.multiply(Vector3f.POSITIVE_Y.getDegreesQuaternion(270.0F * shulkerBoxBlockEntity.getAnimationProgress(f)));
-		this.model.getTopShell().render(matrixStack, vertexConsumer, i, j);
-		RenderSystem.color4f(1, 1, 1, 1);
+		this.model.getTopShell().render(matrixStack, vertexConsumer, i, j, r, g, b, 1f);
 		matrixStack.pop();
 	}
 }

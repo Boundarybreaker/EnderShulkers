@@ -13,6 +13,7 @@ import net.minecraft.entity.EntityContext;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.inventory.Inventory;
+import net.minecraft.inventory.SidedInventory;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
@@ -30,14 +31,16 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
+import space.bbkr.endershulkers.EnderShulkers;
 import space.bbkr.endershulkers.block.entity.EnderShulkerBlockEntity;
 
 import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.List;
 
-public class EnderShulkerBlock extends BlockWithEntity {
+public class EnderShulkerBlock extends BlockWithEntity implements InventoryProvider {
 	public static final EnumProperty<Direction> FACING = FacingBlock.FACING;
 	
 	public EnderShulkerBlock(Settings settings) {
@@ -181,5 +184,15 @@ public class EnderShulkerBlock extends BlockWithEntity {
 
 	public BlockState mirror(BlockState state, BlockMirror mirror) {
 		return state.rotate(mirror.getRotation(state.get(FACING)));
+	}
+
+	@Override
+	public SidedInventory getInventory(BlockState state, IWorld world, BlockPos pos) {
+		BlockEntity be = world.getBlockEntity(pos);
+		if (be instanceof EnderShulkerBlockEntity) {
+			int channel = ((EnderShulkerBlockEntity)be).getChannel();
+			return EnderShulkers.ENDER_SHULKER_COMPONENT.get(world.getLevelProperties()).getInventory(channel);
+		}
+		return null;
 	}
 }
