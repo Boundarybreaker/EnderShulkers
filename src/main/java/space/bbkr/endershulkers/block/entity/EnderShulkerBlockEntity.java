@@ -18,6 +18,7 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Tickable;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
@@ -25,6 +26,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.shape.VoxelShapes;
 import space.bbkr.endershulkers.EnderShulkers;
+import space.bbkr.endershulkers.block.EnderShulkerBlock;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -34,7 +36,7 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 	public float prevAnimationProgress;
 	public int viewerCount;
 	private ShulkerBoxBlockEntity.AnimationStage animationStage = ShulkerBoxBlockEntity.AnimationStage.CLOSED;
-	private int channel;
+	private int channel = 0xFFFFFF;
 
 	public EnderShulkerBlockEntity() {
 		super(EnderShulkers.ENDER_SHULKER_BLOCK_ENTITY);
@@ -97,8 +99,8 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 
 	private void pushEntities() {
 		BlockState blockState = this.world.getBlockState(this.getPos());
-		if (blockState.getBlock() instanceof ShulkerBoxBlock) {
-			Direction direction = blockState.get(ShulkerBoxBlock.FACING);
+		if (blockState.getBlock() instanceof EnderShulkerBlock) {
+			Direction direction = blockState.get(EnderShulkerBlock.FACING);
 			Box box = this.getCollisionBox(direction).offset(this.pos);
 			List<Entity> list = this.world.getEntities(null, box);
 			if (!list.isEmpty()) {
@@ -236,7 +238,7 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 
 	@Override
 	public Text getDisplayName() {
-		return new LiteralText("");
+		return new TranslatableText("title.endershulkers.ender_shulker", Integer.toString(channel, 16));
 	}
 
 	@Nullable
