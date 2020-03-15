@@ -10,6 +10,7 @@ import net.minecraft.block.piston.PistonBehavior;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.container.Container;
 import net.minecraft.entity.EntityContext;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.inventory.Inventory;
@@ -82,7 +83,7 @@ public class EnderShulkerBlock extends BlockWithEntity implements InventoryProvi
 				}
 
 				if (canOpen) {
-					EnderShulkers.ENDER_SHULKER_COMPONENT.get(world.getLevelProperties()).getInventory(shulker.getColor()).setCurrentBlockEntity(shulker);
+					EnderShulkers.ENDER_SHULKER_COMPONENT.get(world.getLevelProperties()).getInventory(shulker.getOwnerId(), shulker.getColor()).setCurrentBlockEntity(shulker);
 					player.openContainer(shulker);
 					player.incrementStat(Stats.OPEN_SHULKER_BOX);
 				}
@@ -138,6 +139,31 @@ public class EnderShulkerBlock extends BlockWithEntity implements InventoryProvi
 		return Container.calculateComparatorOutput((Inventory)world.getBlockEntity(pos));
 	}
 
+	@Override
+	public void onBreak(World world, BlockPos pos, BlockState state, PlayerEntity player) {
+		BlockEntity be = world.getBlockEntity(pos);
+		if (be instanceof EnderShulkerBlockEntity) {
+			EnderShulkerBlockEntity shulker = (EnderShulkerBlockEntity) be;
+			if (!world.isClient && player.isCreative()) {
+				ItemStack stack = new ItemStack(EnderShulkers.ENDER_SHULKER_ITEM);
+				CompoundTag tag = stack.getOrCreateSubTag("BlockEntityTag");
+				tag.putInt("Channel", shulker.getColor());
+				if (shulker.getOwnerId() != null)  tag.putUuid("Owner", shulker.getOwnerId());
+
+				if (shulker.hasCustomName()) {
+					stack.setCustomName(shulker.getCustomName());
+				}
+
+				ItemEntity itemEntity = new ItemEntity(world, pos.getX(), pos.getY(), pos.getZ(), stack);
+				itemEntity.setToDefaultPickupDelay();
+				world.spawnEntity(itemEntity);
+			} else {
+//				shulker.checkLootInteraction(player); TODO: necessary for us?
+			}
+		}
+		super.onBreak(world, pos, state, player);
+	}
+
 	@Environment(EnvType.CLIENT)
 	public ItemStack getPickStack(BlockView world, BlockPos pos, BlockState state) {
 		ItemStack stack = super.getPickStack(world, pos, state);
@@ -163,8 +189,9 @@ public class EnderShulkerBlock extends BlockWithEntity implements InventoryProvi
 	public SidedInventory getInventory(BlockState state, IWorld world, BlockPos pos) {
 		BlockEntity be = world.getBlockEntity(pos);
 		if (be instanceof EnderShulkerBlockEntity) {
-			int channel = ((EnderShulkerBlockEntity)be).getColor();
-			return EnderShulkers.ENDER_SHULKER_COMPONENT.get(world.getLevelProperties()).getInventory(channel);
+			EnderShulkerBlockEntity shulker = (EnderShulkerBlockEntity)be;
+			int channel = shulker.getColor();
+			return EnderShulkers.ENDER_SHULKER_COMPONENT.get(world.getLevelProperties()).getInventory(shulker.getOwnerId(), channel);
 		}
 		return null;
 	}

@@ -34,7 +34,7 @@ public class EnderShulkerRenderer extends BlockEntityRenderer<EnderShulkerBlockE
 		}
 
 		int color = be.getColor();
-		SpriteIdentifier spriteId = new SpriteIdentifier(TexturedRenderLayers.SHULKER_BOXES_ATLAS_TEXTURE, EnderShulkersClient.ENDER_SHULKER_ID);
+		SpriteIdentifier spriteId = new SpriteIdentifier(TexturedRenderLayers.SHULKER_BOXES_ATLAS_TEXTURE, be.getOwnerId() == null? EnderShulkersClient.ENDER_SHULKER_ID : EnderShulkersClient.PRIVATE_ENDER_SHULKER_ID);
 
 		matrixStack.push();
 		matrixStack.translate(0.5D, 0.5D, 0.5D);

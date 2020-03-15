@@ -15,6 +15,16 @@
                   "source": "Channel",
                   "target": "BlockEntityTag.Channel",
                   "op": "replace"
+                },
+                {
+                  "source": "OwnerMost",
+                  "target": "BlockEntityTag.OwnerMost",
+                  "op": "replace"
+                },
+                {
+                  "source": "OwnerLeast",
+                  "target": "BlockEntityTag.OwnerLeast",
+                  "op": "replace"
                 }
               ]
             }

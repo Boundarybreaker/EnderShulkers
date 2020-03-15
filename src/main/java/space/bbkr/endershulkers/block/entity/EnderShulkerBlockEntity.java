@@ -30,6 +30,7 @@ import space.bbkr.endershulkers.block.EnderShulkerBlock;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.UUID;
 
 public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, BlockEntityClientSerializable, NameableContainerFactory, DyeableBlockEntity {
 	public float animationProgress;
@@ -37,6 +38,8 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 	public int viewerCount;
 	private ShulkerBoxBlockEntity.AnimationStage animationStage = ShulkerBoxBlockEntity.AnimationStage.CLOSED;
 	private int channel = 0xFFFFFF;
+	private UUID ownerId = null;
+	private Text customName;
 
 	public EnderShulkerBlockEntity() {
 		super(EnderShulkers.ENDER_SHULKER_BLOCK_ENTITY);
@@ -206,12 +209,14 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 	public void fromTag(CompoundTag tag) {
 		super.fromTag(tag);
 		channel = tag.getInt("Channel");
+		if (tag.containsUuid("Owner")) ownerId = tag.getUuid("Owner");
 	}
 
 	@Override
 	public CompoundTag toTag(CompoundTag tag) {
 		super.toTag(tag);
 		tag.putInt("Channel", channel);
+		if (ownerId != null) tag.putUuid("Owner", ownerId);
 		return tag;
 	}
 
@@ -236,7 +241,20 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 	@Nullable
 	@Override
 	public Container createMenu(int syncId, PlayerInventory inv, PlayerEntity player) {
-		return new ShulkerBoxContainer(syncId, inv, EnderShulkers.ENDER_SHULKER_COMPONENT.get(world.getLevelProperties()).getInventory(getColor()));
+		return new ShulkerBoxContainer(syncId, inv, EnderShulkers.ENDER_SHULKER_COMPONENT.get(world.getLevelProperties()).getInventory(ownerId, getColor()));
+	}
+
+	public UUID getOwnerId() {
+		return ownerId;
+	}
+
+	public void setOwnerId(UUID ownerId) {
+		this.ownerId = ownerId;
+		sync();
+	}
+
+	public void removeOwnerId() {
+	this.ownerId = null;
 	}
 
 	@Override
@@ -259,5 +277,17 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 	public void removeColor() {
 		this.channel = 0xFFFFFF;
 		if (world != null && !world.isClient) sync();
+	}
+
+	public boolean hasCustomName() {
+		return customName != null;
+	}
+
+	public Text getCustomName() {
+		return customName;
+	}
+
+	public void setCustomName(Text name) {
+		this.customName = name;
 	}
 }
