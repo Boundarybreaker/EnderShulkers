@@ -3,5 +3,10 @@
   "package": "space.bbkr.endershulkers.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "MixinBucketItem",
+    "MixinDyeItem"
+  ],
+  "client": [
+    "MixinBuiltinModelItemRenderer"
   ]
 }

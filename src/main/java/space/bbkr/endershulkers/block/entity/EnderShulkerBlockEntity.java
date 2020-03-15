@@ -16,7 +16,6 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Tickable;
@@ -25,13 +24,14 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.shape.VoxelShapes;
+import space.bbkr.endershulkers.DyeableBlockEntity;
 import space.bbkr.endershulkers.EnderShulkers;
 import space.bbkr.endershulkers.block.EnderShulkerBlock;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, BlockEntityClientSerializable, NameableContainerFactory {
+public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, BlockEntityClientSerializable, NameableContainerFactory, DyeableBlockEntity {
 	public float animationProgress;
 	public float prevAnimationProgress;
 	public int viewerCount;
@@ -202,14 +202,6 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 		return MathHelper.lerp(f, this.prevAnimationProgress, this.animationProgress);
 	}
 
-	public int getChannel() {
-		return channel;
-	}
-
-	public void setChannel(int channel) {
-		this.channel = channel;
-	}
-
 	@Override
 	public void fromTag(CompoundTag tag) {
 		super.fromTag(tag);
@@ -238,12 +230,34 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 
 	@Override
 	public Text getDisplayName() {
-		return new TranslatableText("title.endershulkers.ender_shulker", Integer.toString(channel, 16));
+		return new TranslatableText("title.endershulkers.ender_shulker", EnderShulkerBlock.getChannelColor(channel));
 	}
 
 	@Nullable
 	@Override
 	public Container createMenu(int syncId, PlayerInventory inv, PlayerEntity player) {
-		return new ShulkerBoxContainer(syncId, inv, EnderShulkers.ENDER_SHULKER_COMPONENT.get(world.getLevelProperties()).getInventory(getChannel()));
+		return new ShulkerBoxContainer(syncId, inv, EnderShulkers.ENDER_SHULKER_COMPONENT.get(world.getLevelProperties()).getInventory(getColor()));
+	}
+
+	@Override
+	public boolean hasColor() {
+		return channel != 0xFFFFFF;
+	}
+
+	@Override
+	public int getColor() {
+		return channel;
+	}
+
+	@Override
+	public void setColor(int color) {
+		this.channel = color;
+		if (world != null && !world.isClient) sync();
+	}
+
+	@Override
+	public void removeColor() {
+		this.channel = 0xFFFFFF;
+		if (world != null && !world.isClient) sync();
 	}
 }

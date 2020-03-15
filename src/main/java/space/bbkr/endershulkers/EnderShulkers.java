@@ -5,6 +5,7 @@ import nerdhub.cardinal.components.api.ComponentType;
 import nerdhub.cardinal.components.api.event.LevelComponentCallback;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.block.FabricBlockSettings;
+import net.fabricmc.fabric.api.tools.FabricToolTags;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntity;
@@ -19,6 +20,7 @@ import org.apache.logging.log4j.Logger;
 import space.bbkr.endershulkers.block.EnderShulkerBlock;
 import space.bbkr.endershulkers.block.entity.EnderShulkerBlockEntity;
 import space.bbkr.endershulkers.component.EnderShulkerComponent;
+import space.bbkr.endershulkers.item.DyeableBlockItem;
 
 import java.util.function.Supplier;
 
@@ -29,9 +31,9 @@ public class EnderShulkers implements ModInitializer {
 
 	public static final ComponentType<EnderShulkerComponent> ENDER_SHULKER_COMPONENT = ComponentRegistry.INSTANCE.registerIfAbsent(new Identifier(MODID, "ender_shulkers"), EnderShulkerComponent.class);
 
-	public static final Block ENDER_SHULKER_BLOCK = register("ender_shulker_box", new EnderShulkerBlock(FabricBlockSettings.copy(Blocks.SHULKER_BOX).build()));
+	public static final Block ENDER_SHULKER_BLOCK = register("ender_shulker_box", new EnderShulkerBlock(FabricBlockSettings.copy(Blocks.SHULKER_BOX).breakByTool(FabricToolTags.PICKAXES).build()));
 	public static final BlockEntityType<EnderShulkerBlockEntity> ENDER_SHULKER_BLOCK_ENTITY = register("ender_shulker_box", EnderShulkerBlockEntity::new, ENDER_SHULKER_BLOCK);
-	public static final Item ENDER_SHULKER_ITEM = register("ender_shulker_box", new BlockItem(ENDER_SHULKER_BLOCK, new Item.Settings().group(ItemGroup.DECORATIONS)));
+	public static final Item ENDER_SHULKER_ITEM = register("ender_shulker_box", new DyeableBlockItem(ENDER_SHULKER_BLOCK, new Item.Settings().group(ItemGroup.DECORATIONS)));
 
 	@Override
 	public void onInitialize() {

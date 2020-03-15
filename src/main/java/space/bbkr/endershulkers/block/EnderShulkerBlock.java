@@ -14,8 +14,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.SidedInventory;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.item.ItemStack;
+import net.minecraft.item.*;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.stat.Stats;
@@ -38,6 +37,7 @@ import space.bbkr.endershulkers.EnderShulkers;
 import space.bbkr.endershulkers.block.entity.EnderShulkerBlockEntity;
 
 import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -71,23 +71,23 @@ public class EnderShulkerBlock extends BlockWithEntity implements InventoryProvi
 		} else {
 			BlockEntity be = world.getBlockEntity(pos);
 			if (be instanceof EnderShulkerBlockEntity) {
+				EnderShulkerBlockEntity shulker = (EnderShulkerBlockEntity) be;
 				Direction direction = state.get(FACING);
-				EnderShulkerBlockEntity shulker = (EnderShulkerBlockEntity)be;
 				boolean canOpen;
 				if (shulker.getAnimationStage() == ShulkerBoxBlockEntity.AnimationStage.CLOSED) {
-					Box box = VoxelShapes.fullCube().getBoundingBox().stretch(0.5F * (float)direction.getOffsetX(), 0.5F * (float)direction.getOffsetY(), 0.5F * (float)direction.getOffsetZ()).shrink(direction.getOffsetX(), direction.getOffsetY(), direction.getOffsetZ());
+					Box box = VoxelShapes.fullCube().getBoundingBox().stretch(0.5F * (float) direction.getOffsetX(), 0.5F * (float) direction.getOffsetY(), 0.5F * (float) direction.getOffsetZ()).shrink(direction.getOffsetX(), direction.getOffsetY(), direction.getOffsetZ());
 					canOpen = world.doesNotCollide(box.offset(pos.offset(direction)));
 				} else {
 					canOpen = true;
 				}
 
 				if (canOpen) {
-					EnderShulkers.ENDER_SHULKER_COMPONENT.get(world.getLevelProperties()).getInventory(shulker.getChannel()).setCurrentBlockEntity(shulker);
+					EnderShulkers.ENDER_SHULKER_COMPONENT.get(world.getLevelProperties()).getInventory(shulker.getColor()).setCurrentBlockEntity(shulker);
 					player.openContainer(shulker);
 					player.incrementStat(Stats.OPEN_SHULKER_BOX);
 				}
-
 				return ActionResult.SUCCESS;
+
 			} else {
 				return ActionResult.PASS;
 			}
@@ -116,14 +116,9 @@ public class EnderShulkerBlock extends BlockWithEntity implements InventoryProvi
 	@Environment(EnvType.CLIENT)
 	public void buildTooltip(ItemStack stack, @Nullable BlockView view, List<Text> tooltip, TooltipContext options) {
 		super.buildTooltip(stack, view, tooltip, options);
-		CompoundTag tag = stack.getSubTag("BlockEntityTag");
-		if (tag != null) {
-			int color = tag.getInt("Channel");
-			tooltip.add(new TranslatableText("tooltip.endershulkers.channel", Integer.toString(color, 16)).formatted(Formatting.GRAY));
-		} else {
-			tooltip.add(new TranslatableText("tooltip.endershulkers.channel", Integer.toString(0xFFFFFF, 16)).formatted(Formatting.GRAY));
+		if (stack.getItem() instanceof DyeableItem) {
+			tooltip.add(new TranslatableText("tooltip.endershulkers.channel", getChannelColor(((DyeableItem)stack.getItem()).getColor(stack))).formatted(Formatting.GRAY));
 		}
-
 	}
 
 	public PistonBehavior getPistonBehavior(BlockState state) {
@@ -148,7 +143,7 @@ public class EnderShulkerBlock extends BlockWithEntity implements InventoryProvi
 		ItemStack stack = super.getPickStack(world, pos, state);
 		EnderShulkerBlockEntity be = (EnderShulkerBlockEntity)world.getBlockEntity(pos);
 		CompoundTag tag = new CompoundTag();
-		tag.putInt("Channel", be.getChannel());
+		tag.putInt("Channel", be.getColor());
 		if (!tag.isEmpty()) {
 			stack.putSubTag("BlockEntityTag", tag);
 		}
@@ -168,7 +163,7 @@ public class EnderShulkerBlock extends BlockWithEntity implements InventoryProvi
 	public SidedInventory getInventory(BlockState state, IWorld world, BlockPos pos) {
 		BlockEntity be = world.getBlockEntity(pos);
 		if (be instanceof EnderShulkerBlockEntity) {
-			int channel = ((EnderShulkerBlockEntity)be).getChannel();
+			int channel = ((EnderShulkerBlockEntity)be).getColor();
 			return EnderShulkers.ENDER_SHULKER_COMPONENT.get(world.getLevelProperties()).getInventory(channel);
 		}
 		return null;
@@ -188,5 +183,16 @@ public class EnderShulkerBlock extends BlockWithEntity implements InventoryProvi
 			world.addParticle(ParticleTypes.PORTAL, d, e, f, g, h, l);
 		}
 
+	}
+
+	public static String getChannelColor(int color) {
+		String original = Integer.toHexString(color);
+		StringBuilder hex = new StringBuilder(original);
+		if (hex.length() < 6) {
+			for (int i = 0; i < 6 - original.length(); i++) {
+				hex.insert(0, "0");
+			}
+		}
+		return hex.toString().toUpperCase();
 	}
 }
