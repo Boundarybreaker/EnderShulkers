@@ -1,18 +1,22 @@
 package space.bbkr.endershulkers.inventory;
 
+import io.github.cottonmc.component.compat.vanilla.SidedInventoryWrapper;
+import io.github.cottonmc.component.item.InventoryComponent;
+import io.github.cottonmc.component.item.impl.SimpleInventoryComponent;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.BasicInventory;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.SidedInventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.world.IWorld;
 import space.bbkr.endershulkers.block.entity.EnderShulkerBlockEntity;
 import space.bbkr.endershulkers.component.EnderShulkerComponent;
 
 import javax.annotation.Nullable;
+import java.util.stream.IntStream;
 
-public class EnderShulkerInventory extends BasicInventory implements SidedInventory {
+public class EnderShulkerInventory extends SimpleInventoryComponent {
 	private EnderShulkerBlockEntity currentBlockEntity;
 
 	public EnderShulkerInventory() {
@@ -23,57 +27,15 @@ public class EnderShulkerInventory extends BasicInventory implements SidedInvent
 		this.currentBlockEntity = be;
 	}
 
-	public void readTags(ListTag listTag) {
-		int j;
-		for(j = 0; j < this.getInvSize(); ++j) {
-			this.setInvStack(j, ItemStack.EMPTY);
-		}
-
-		for(j = 0; j < listTag.size(); ++j) {
-			CompoundTag compoundTag = listTag.getCompound(j);
-			int k = compoundTag.getByte("Slot") & 255;
-			if (k >= 0 && k < this.getInvSize()) {
-				this.setInvStack(k, ItemStack.fromTag(compoundTag));
-			}
-		}
-
+	@Override
+	public Inventory asInventory() {
+		return new EnderShulkerWrapper();
 	}
 
-	public ListTag getTags() {
-		ListTag listTag = new ListTag();
-
-		for(int i = 0; i < this.getInvSize(); ++i) {
-			ItemStack itemStack = this.getInvStack(i);
-			if (!itemStack.isEmpty()) {
-				CompoundTag compoundTag = new CompoundTag();
-				compoundTag.putByte("Slot", (byte)i);
-				itemStack.toTag(compoundTag);
-				listTag.add(compoundTag);
-			}
-		}
-
-		return listTag;
-	}
-
-	public boolean canPlayerUseInv(PlayerEntity player) {
-		return this.currentBlockEntity != null && !this.currentBlockEntity.canPlayerUse(player) ? false : super.canPlayerUseInv(player);
-	}
-
-	public void onInvOpen(PlayerEntity player) {
-		if (this.currentBlockEntity != null) {
-			this.currentBlockEntity.onOpen();
-		}
-
-		super.onInvOpen(player);
-	}
-
-	public void onInvClose(PlayerEntity player) {
-		if (this.currentBlockEntity != null) {
-			this.currentBlockEntity.onClose();
-		}
-
-		super.onInvClose(player);
-		this.currentBlockEntity = null;
+	@Nullable
+	@Override
+	public SidedInventory asLocalInventory(IWorld world, BlockPos pos) {
+		return new EnderShulkerWrapper(world, pos);
 	}
 
 	@Override
@@ -81,23 +43,65 @@ public class EnderShulkerInventory extends BasicInventory implements SidedInvent
 		super.markDirty();
 		EnderShulkerComponent.INSTANCE.sync();
 	}
-
-	@Override
-	public int[] getInvAvailableSlots(Direction side) {
-		int[] ret = new int[27];
-		for (int i = 0; i < 27; i++) {
-			ret[i] = i;
+	
+	private class EnderShulkerWrapper implements SidedInventoryWrapper {
+		private EnderShulkerInventory inv = EnderShulkerInventory.this;
+		private EnderShulkerBlockEntity be;
+		
+		private EnderShulkerWrapper() {
+			this.be = inv.currentBlockEntity;
 		}
-		return ret;
-	}
+		
+		private EnderShulkerWrapper(IWorld world, BlockPos pos) {
+			be = (EnderShulkerBlockEntity)world.getBlockEntity(pos);
+		}
 
-	@Override
-	public boolean canInsertInvStack(int slot, ItemStack stack, @Nullable Direction dir) {
-		return true;
-	}
+		@Nullable
+		@Override
+		public InventoryComponent getComponent(@Nullable Direction direction) {
+			return inv;
+		}
 
-	@Override
-	public boolean canExtractInvStack(int slot, ItemStack stack, Direction dir) {
-		return true;
-	}
+		@Override
+		public boolean canPlayerUseInv(PlayerEntity player) {
+			return (be == null || be.canPlayerUse(player));
+		}
+
+		@Override
+		public void onInvOpen(PlayerEntity player) {
+			if (be != null) {
+				be.onOpen();
+			}
+		}
+
+		@Override
+		public void onInvClose(PlayerEntity player) {
+			if (be != null) {
+				be.onClose();
+			}
+
+			be = null;
+		}
+
+		@Override
+		public int[] getInvAvailableSlots(Direction side) {
+			if (be.isLocked()) return new int[0];
+			return IntStream.range(0, getInvSize()).toArray();
+		}
+
+		@Override
+		public boolean canInsertInvStack(int slot, ItemStack stack, @Nullable Direction dir) {
+			return !be.isLocked();
+		}
+
+		@Override
+		public boolean canExtractInvStack(int slot, ItemStack stack, Direction dir) {
+			return !be.isLocked();
+		}
+
+		@Override
+		public void markDirty() {
+			inv.markDirty();
+		}
+	};
 }

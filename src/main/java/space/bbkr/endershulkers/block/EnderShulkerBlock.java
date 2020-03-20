@@ -1,6 +1,10 @@
 package space.bbkr.endershulkers.block;
 
 
+import io.github.cottonmc.component.UniversalComponents;
+import nerdhub.cardinal.components.api.ComponentType;
+import nerdhub.cardinal.components.api.component.BlockComponentProvider;
+import nerdhub.cardinal.components.api.component.Component;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.*;
@@ -12,16 +16,15 @@ import net.minecraft.container.Container;
 import net.minecraft.entity.EntityContext;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventories;
 import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.SidedInventory;
-import net.minecraft.item.*;
+import net.minecraft.item.DyeableItem;
+import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.stat.Stats;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.EnumProperty;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.*;
@@ -32,18 +35,17 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
-import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import space.bbkr.endershulkers.EnderShulkers;
 import space.bbkr.endershulkers.block.entity.EnderShulkerBlockEntity;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
-public class EnderShulkerBlock extends BlockWithEntity implements InventoryProvider {
+public class EnderShulkerBlock extends BlockWithEntity implements BlockComponentProvider {
 	public static final EnumProperty<Direction> FACING = FacingBlock.FACING;
 	
 	public EnderShulkerBlock(Settings settings) {
@@ -186,14 +188,41 @@ public class EnderShulkerBlock extends BlockWithEntity implements InventoryProvi
 	}
 
 	@Override
-	public SidedInventory getInventory(BlockState state, IWorld world, BlockPos pos) {
+	public <T extends Component> boolean hasComponent(BlockView world, BlockPos pos, ComponentType<T> type, @Nullable Direction dir) {
+		if (type == UniversalComponents.INVENTORY_COMPONENT) {
+			BlockEntity be = world.getBlockEntity(pos);
+			if (be instanceof EnderShulkerBlockEntity) {
+				EnderShulkerBlockEntity shulker = (EnderShulkerBlockEntity)be;
+				return !shulker.isLocked();
+			}
+		}
+		return false;
+	}
+
+	@Nullable
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T extends Component> T getComponent(BlockView world, BlockPos pos, ComponentType<T> type, @Nullable Direction dir) {
+		if (type == UniversalComponents.INVENTORY_COMPONENT) {
+			BlockEntity be = world.getBlockEntity(pos);
+			if (be instanceof EnderShulkerBlockEntity) {
+				EnderShulkerBlockEntity shulker = (EnderShulkerBlockEntity) be;
+				if (shulker.isLocked()) return null;
+				int channel = shulker.getColor();
+				return (T) EnderShulkers.ENDER_SHULKER_COMPONENT.get(be.getWorld().getLevelProperties()).getInventory(shulker.getOwnerId(), channel);
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public Set<ComponentType<?>> getComponentTypes(BlockView world, BlockPos pos, @Nullable Direction dir) {
 		BlockEntity be = world.getBlockEntity(pos);
 		if (be instanceof EnderShulkerBlockEntity) {
 			EnderShulkerBlockEntity shulker = (EnderShulkerBlockEntity)be;
-			int channel = shulker.getColor();
-			return EnderShulkers.ENDER_SHULKER_COMPONENT.get(world.getLevelProperties()).getInventory(shulker.getOwnerId(), channel);
+			if (!shulker.isLocked()) return Collections.singleton(UniversalComponents.INVENTORY_COMPONENT);
 		}
-		return null;
+		return Collections.emptySet();
 	}
 
 	@Environment(EnvType.CLIENT)

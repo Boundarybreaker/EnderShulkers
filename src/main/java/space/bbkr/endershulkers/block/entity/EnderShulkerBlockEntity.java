@@ -40,6 +40,7 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 	private int channel = 0xFFFFFF;
 	private UUID ownerId = null;
 	private Text customName;
+	private boolean locked;
 
 	public EnderShulkerBlockEntity() {
 		super(EnderShulkers.ENDER_SHULKER_BLOCK_ENTITY);
@@ -193,11 +194,18 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 		world.playSound(null, getPos(), SoundEvents.BLOCK_SHULKER_BOX_CLOSE, SoundCategory.BLOCKS, 1f, 1f);
 	}
 
-	public boolean canPlayerUse(PlayerEntity playerEntity) {
+	public boolean canPlayerUse(PlayerEntity player) {
 		if (this.world.getBlockEntity(this.pos) != this) {
 			return false;
 		} else {
-			return playerEntity.squaredDistanceTo((double)this.pos.getX() + 0.5D, (double)this.pos.getY() + 0.5D, (double)this.pos.getZ() + 0.5D) <= 64.0D;
+			if (locked && ownerId != null) {
+				if (!player.getUuid().equals(ownerId)) {
+					player.playSound(SoundEvents.BLOCK_CHEST_LOCKED, SoundCategory.BLOCKS, 1f, 1f);
+					player.addChatMessage(new TranslatableText("msg.endershulkers.locked"), true);
+					return false;
+				}
+			}
+			return player.squaredDistanceTo((double)this.pos.getX() + 0.5D, (double)this.pos.getY() + 0.5D, (double)this.pos.getZ() + 0.5D) <= 64.0D;
 		}
 	}
 
@@ -210,6 +218,7 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 		super.fromTag(tag);
 		channel = tag.getInt("Channel");
 		if (tag.containsUuid("Owner")) ownerId = tag.getUuid("Owner");
+		locked = tag.getBoolean("Locked");
 	}
 
 	@Override
@@ -217,6 +226,7 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 		super.toTag(tag);
 		tag.putInt("Channel", channel);
 		if (ownerId != null) tag.putUuid("Owner", ownerId);
+		tag.putBoolean("Locked", locked);
 		return tag;
 	}
 
@@ -241,7 +251,7 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 	@Nullable
 	@Override
 	public Container createMenu(int syncId, PlayerInventory inv, PlayerEntity player) {
-		return new ShulkerBoxContainer(syncId, inv, EnderShulkers.ENDER_SHULKER_COMPONENT.get(world.getLevelProperties()).getInventory(ownerId, getColor()));
+		return new ShulkerBoxContainer(syncId, inv, EnderShulkers.ENDER_SHULKER_COMPONENT.get(world.getLevelProperties()).getInventory(ownerId, getColor()).asInventory());
 	}
 
 	public UUID getOwnerId() {
@@ -289,5 +299,15 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 
 	public void setCustomName(Text name) {
 		this.customName = name;
+		if (!world.isClient) sync();
+	}
+
+	public boolean isLocked() {
+		return locked;
+	}
+
+	public void setLocked(boolean locked) {
+		this.locked = locked;
+		if (!world.isClient) sync();
 	}
 }

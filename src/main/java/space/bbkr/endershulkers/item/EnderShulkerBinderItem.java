@@ -8,8 +8,8 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.world.World;
 import space.bbkr.endershulkers.block.entity.EnderShulkerBlockEntity;
 
-public class EnderShulkerLockItem extends Item {
-	public EnderShulkerLockItem(Settings settings) {
+public class EnderShulkerBinderItem extends Item {
+	public EnderShulkerBinderItem(Settings settings) {
 		super(settings);
 	}
 
@@ -21,8 +21,8 @@ public class EnderShulkerLockItem extends Item {
 		BlockEntity be = world.getBlockEntity(context.getBlockPos());
 		if (be instanceof EnderShulkerBlockEntity && player.isSneaking()) {
 			EnderShulkerBlockEntity shulker = (EnderShulkerBlockEntity)be;
-			if ((shulker.getOwnerId() == null || player.getUuid().equals(shulker.getOwnerId())) && !shulker.isLocked()) {
-				shulker.setLocked(true);
+			if (shulker.getOwnerId() == null) {
+				shulker.setOwnerId(player.getUuid());
 				if (!player.isCreative()) context.getStack().decrement(1);
 			}
 		}

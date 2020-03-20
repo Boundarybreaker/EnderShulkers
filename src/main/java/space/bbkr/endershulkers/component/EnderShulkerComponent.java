@@ -4,10 +4,12 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import nerdhub.cardinal.components.api.ComponentType;
 import nerdhub.cardinal.components.api.util.sync.LevelSyncedComponent;
-import net.fabricmc.fabric.api.util.NbtType;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.InventoryProvider;
+import net.minecraft.inventory.SidedInventory;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IWorld;
 import space.bbkr.endershulkers.EnderShulkers;
 import space.bbkr.endershulkers.inventory.EnderShulkerInventory;
 
@@ -53,9 +55,9 @@ public class EnderShulkerComponent implements LevelSyncedComponent {
 		privateNetworks.clear();
 		CompoundTag channelTag = tag.getCompound("Channels");
 		for (String key : channelTag.getKeys()) {
-			ListTag list = channelTag.getList(key, NbtType.COMPOUND);
+			CompoundTag invTag = channelTag.getCompound(key);
 			EnderShulkerInventory inv = new EnderShulkerInventory();
-			inv.readTags(list);
+			inv.fromTag(invTag);
 			channels.put(Integer.parseInt(key), inv);
 		}
 		CompoundTag privateTag = tag.getCompound("PrivateChannels");
@@ -64,9 +66,9 @@ public class EnderShulkerComponent implements LevelSyncedComponent {
 			UUID id = UUID.fromString(key);
 			CompoundTag innerTag = privateTag.getCompound(key);
 			for (String channel : innerTag.getKeys()) {
-				ListTag list = innerTag.getList(channel, NbtType.COMPOUND);
+				CompoundTag invTag = innerTag.getCompound(key);
 				EnderShulkerInventory inv = new EnderShulkerInventory();
-				inv.readTags(list);
+				inv.fromTag(invTag);
 				map.put(Integer.parseInt(channel), inv);
 			}
 			privateNetworks.put(id, map);
@@ -77,7 +79,7 @@ public class EnderShulkerComponent implements LevelSyncedComponent {
 	public CompoundTag toTag(CompoundTag tag) {
 		CompoundTag channelTag = new CompoundTag();
 		for (int key : channels.keySet()) {
-			channelTag.put(String.valueOf(key), channels.get(key).getTags());
+			channelTag.put(String.valueOf(key), channels.get(key).toTag(new CompoundTag()));
 		}
 		tag.put("Channels", channelTag);
 		CompoundTag privateTag = new CompoundTag();
@@ -85,7 +87,7 @@ public class EnderShulkerComponent implements LevelSyncedComponent {
 			Int2ObjectMap<EnderShulkerInventory> map = privateNetworks.get(id);
 			CompoundTag innerTag = new CompoundTag();
 			for (int key : map.keySet()) {
-				innerTag.put(String.valueOf(key), map.get(key).getTags());
+				innerTag.put(String.valueOf(key), map.get(key).toTag(new CompoundTag()));
 			}
 		}
 		tag.put("PrivateChannels", privateTag);
