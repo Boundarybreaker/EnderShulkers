@@ -20,6 +20,7 @@ public class MixinBuiltinModelItemRenderer {
 	@Inject(method = "render", at = @At("HEAD"), cancellable = true)
 	private void injectEnderShulkerRenderer(ItemStack stack, MatrixStack matrix, VertexConsumerProvider vertexConsumerProvider, int light, int overlay, CallbackInfo info) {
 		if (stack.getItem() == EnderShulkers.ENDER_SHULKER_ITEM) {
+			be.fromTag(stack.getOrCreateSubTag("BlockEntityTag"));
 			int color = ((DyeableItem)stack.getItem()).getColor(stack);
 			be.setColor(color);
 			BlockEntityRenderDispatcher.INSTANCE.renderEntity(be, matrix, vertexConsumerProvider, light, overlay);

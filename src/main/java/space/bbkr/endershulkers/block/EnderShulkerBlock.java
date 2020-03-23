@@ -1,6 +1,7 @@
 package space.bbkr.endershulkers.block;
 
 
+import com.mojang.authlib.GameProfile;
 import io.github.cottonmc.component.UniversalComponents;
 import nerdhub.cardinal.components.api.ComponentType;
 import nerdhub.cardinal.components.api.component.BlockComponentProvider;
@@ -15,12 +16,14 @@ import net.minecraft.client.item.TooltipContext;
 import net.minecraft.container.Container;
 import net.minecraft.entity.EntityContext;
 import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.DyeableItem;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtHelper;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.stat.Stats;
 import net.minecraft.state.StateManager;
@@ -38,6 +41,7 @@ import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 import space.bbkr.endershulkers.EnderShulkers;
 import space.bbkr.endershulkers.block.entity.EnderShulkerBlockEntity;
+import space.bbkr.endershulkers.inventory.EnderShulkerInventory;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -122,6 +126,14 @@ public class EnderShulkerBlock extends BlockWithEntity implements BlockComponent
 		if (stack.getItem() instanceof DyeableItem) {
 			tooltip.add(new TranslatableText("tooltip.endershulkers.channel", getChannelColor(((DyeableItem)stack.getItem()).getColor(stack))).formatted(Formatting.GRAY));
 		}
+		CompoundTag beTag = stack.getOrCreateSubTag("BlockEntityTag");
+		if (beTag.containsUuid("Owner")) {
+			CompoundTag newTag = new CompoundTag();
+			newTag.putString("Id", beTag.getUuid("Owner").toString());
+			GameProfile profile = NbtHelper.toGameProfile(newTag);
+			tooltip.add(new TranslatableText("tooltip.endershulkers.owner", profile.getName()).formatted(Formatting.GRAY));
+		}
+		if (beTag.getBoolean("Locked")) tooltip.add(new TranslatableText("tooltip.endershulkers.locked").formatted(Formatting.GRAY));
 	}
 
 	public PistonBehavior getPistonBehavior(BlockState state) {
@@ -138,7 +150,13 @@ public class EnderShulkerBlock extends BlockWithEntity implements BlockComponent
 	}
 
 	public int getComparatorOutput(BlockState state, World world, BlockPos pos) {
-		return Container.calculateComparatorOutput((Inventory)world.getBlockEntity(pos));
+		BlockEntity be = world.getBlockEntity(pos);
+		if (be instanceof EnderShulkerBlockEntity) {
+			EnderShulkerBlockEntity shulker = (EnderShulkerBlockEntity)be;
+			EnderShulkerInventory inv = shulker.getInventory();
+			if (inv != null) return Container.calculateComparatorOutput(inv.asInventory());
+		}
+		return 0;
 	}
 
 	@Override
@@ -166,15 +184,32 @@ public class EnderShulkerBlock extends BlockWithEntity implements BlockComponent
 		super.onBreak(world, pos, state, player);
 	}
 
+	public void onPlaced(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
+		if (stack.hasCustomName()) {
+			BlockEntity be = world.getBlockEntity(pos);
+			if (be instanceof EnderShulkerBlockEntity) {
+				EnderShulkerBlockEntity shulker = (EnderShulkerBlockEntity)be;
+				if (shulker.getOwnerId() == null) {
+					shulker.setCustomName(stack.getName());
+				}
+			}
+		}
+
+	}
+
 	@Environment(EnvType.CLIENT)
 	public ItemStack getPickStack(BlockView world, BlockPos pos, BlockState state) {
 		ItemStack stack = super.getPickStack(world, pos, state);
 		EnderShulkerBlockEntity be = (EnderShulkerBlockEntity)world.getBlockEntity(pos);
 		CompoundTag tag = new CompoundTag();
 		tag.putInt("Channel", be.getColor());
+		if (be.getOwnerId() != null) tag.putUuid("Owner", be.getOwnerId());
+		tag.putBoolean("Locked", be.isLocked());
 		if (!tag.isEmpty()) {
 			stack.putSubTag("BlockEntityTag", tag);
 		}
+
+		if (be.hasCustomName()) stack.setCustomName(be.getName());
 
 		return stack;
 	}

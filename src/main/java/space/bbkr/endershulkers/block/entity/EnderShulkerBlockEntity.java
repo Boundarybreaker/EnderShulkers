@@ -1,6 +1,7 @@
 package space.bbkr.endershulkers.block.entity;
 
 import net.fabricmc.fabric.api.block.entity.BlockEntityClientSerializable;
+import net.fabricmc.fabric.api.util.NbtType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.block.entity.BlockEntity;
@@ -18,6 +19,7 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
+import net.minecraft.util.Nameable;
 import net.minecraft.util.Tickable;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
@@ -27,20 +29,21 @@ import net.minecraft.util.shape.VoxelShapes;
 import space.bbkr.endershulkers.DyeableBlockEntity;
 import space.bbkr.endershulkers.EnderShulkers;
 import space.bbkr.endershulkers.block.EnderShulkerBlock;
+import space.bbkr.endershulkers.inventory.EnderShulkerInventory;
 
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.UUID;
 
-public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, BlockEntityClientSerializable, NameableContainerFactory, DyeableBlockEntity {
+public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, BlockEntityClientSerializable, NameableContainerFactory, DyeableBlockEntity, Nameable {
 	public float animationProgress;
 	public float prevAnimationProgress;
 	public int viewerCount;
 	private ShulkerBoxBlockEntity.AnimationStage animationStage = ShulkerBoxBlockEntity.AnimationStage.CLOSED;
 	private int channel = 0xFFFFFF;
 	private UUID ownerId = null;
-	private Text customName;
 	private boolean locked;
+	private Text customName;
 
 	public EnderShulkerBlockEntity() {
 		super(EnderShulkers.ENDER_SHULKER_BLOCK_ENTITY);
@@ -81,6 +84,90 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 				this.animationProgress = 1.0F;
 		}
 
+	}
+
+	public UUID getOwnerId() {
+		return ownerId;
+	}
+
+	public void setOwnerId(UUID ownerId) {
+		this.ownerId = ownerId;
+		sync();
+	}
+
+	public void removeOwnerId() {
+		this.ownerId = null;
+	}
+
+	@Override
+	public boolean hasColor() {
+		return channel != 0xFFFFFF;
+	}
+
+	@Override
+	public int getColor() {
+		return channel;
+	}
+
+	@Override
+	public void setColor(int color) {
+		this.channel = color;
+		if (world != null && !world.isClient) sync();
+	}
+
+	@Override
+	public void removeColor() {
+		this.channel = 0xFFFFFF;
+		if (world != null && !world.isClient) sync();
+	}
+
+	@Override
+	public boolean hasCustomName() {
+		if (ownerId == null) {
+			return customName != null;
+		}
+		return getInventoryAlways().hasCustomName();
+	}
+
+	@Override
+	public Text getCustomName() {
+		if (ownerId == null) {
+			return customName;
+		}
+		return getInventoryAlways().getCustomName();
+	}
+
+	@Override
+	public Text getName() {
+		if (hasCustomName()) return getCustomName();
+		return new TranslatableText("title.endershulkers.ender_shulker", EnderShulkerBlock.getChannelColor(channel));
+	}
+
+	public void setCustomName(Text name) {
+		if (ownerId == null) {
+
+		} else {
+			getInventoryAlways().setCustomName(name);
+		}
+	}
+
+	public boolean isLocked() {
+		return locked;
+	}
+
+	public void setLocked(boolean locked) {
+		this.locked = locked;
+		if (!world.isClient) sync();
+	}
+
+	@Nullable
+	public EnderShulkerInventory getInventory() {
+		if (isLocked()) return null;
+		return EnderShulkers.ENDER_SHULKER_COMPONENT.get(world.getLevelProperties()).getInventory(ownerId, channel);
+	}
+
+	private EnderShulkerInventory getInventoryAlways() {
+		return EnderShulkers.ENDER_SHULKER_COMPONENT.get(world.getLevelProperties()).getInventory(ownerId, channel);
 	}
 
 	public ShulkerBoxBlockEntity.AnimationStage getAnimationStage() {
@@ -219,6 +306,9 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 		channel = tag.getInt("Channel");
 		if (tag.containsUuid("Owner")) ownerId = tag.getUuid("Owner");
 		locked = tag.getBoolean("Locked");
+		if (tag.contains("CustomName", NbtType.STRING)) {
+			this.customName = Text.Serializer.fromJson(tag.getString("CustomName"));
+		}
 	}
 
 	@Override
@@ -227,6 +317,9 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 		tag.putInt("Channel", channel);
 		if (ownerId != null) tag.putUuid("Owner", ownerId);
 		tag.putBoolean("Locked", locked);
+		if (hasCustomName()) {
+			tag.putString("CustomName", Text.Serializer.toJson(customName));
+		}
 		return tag;
 	}
 
@@ -245,69 +338,12 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 
 	@Override
 	public Text getDisplayName() {
-		return new TranslatableText("title.endershulkers.ender_shulker", EnderShulkerBlock.getChannelColor(channel));
+		return getName();
 	}
 
 	@Nullable
 	@Override
 	public Container createMenu(int syncId, PlayerInventory inv, PlayerEntity player) {
 		return new ShulkerBoxContainer(syncId, inv, EnderShulkers.ENDER_SHULKER_COMPONENT.get(world.getLevelProperties()).getInventory(ownerId, getColor()).asInventory());
-	}
-
-	public UUID getOwnerId() {
-		return ownerId;
-	}
-
-	public void setOwnerId(UUID ownerId) {
-		this.ownerId = ownerId;
-		sync();
-	}
-
-	public void removeOwnerId() {
-	this.ownerId = null;
-	}
-
-	@Override
-	public boolean hasColor() {
-		return channel != 0xFFFFFF;
-	}
-
-	@Override
-	public int getColor() {
-		return channel;
-	}
-
-	@Override
-	public void setColor(int color) {
-		this.channel = color;
-		if (world != null && !world.isClient) sync();
-	}
-
-	@Override
-	public void removeColor() {
-		this.channel = 0xFFFFFF;
-		if (world != null && !world.isClient) sync();
-	}
-
-	public boolean hasCustomName() {
-		return customName != null;
-	}
-
-	public Text getCustomName() {
-		return customName;
-	}
-
-	public void setCustomName(Text name) {
-		this.customName = name;
-		if (!world.isClient) sync();
-	}
-
-	public boolean isLocked() {
-		return locked;
-	}
-
-	public void setLocked(boolean locked) {
-		this.locked = locked;
-		if (!world.isClient) sync();
 	}
 }

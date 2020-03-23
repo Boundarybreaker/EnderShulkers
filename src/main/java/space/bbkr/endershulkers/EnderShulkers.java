@@ -35,7 +35,7 @@ public class EnderShulkers implements ModInitializer {
 
 	public static final Block ENDER_SHULKER_BLOCK = register("ender_shulker_box", new EnderShulkerBlock(FabricBlockSettings.copy(Blocks.SHULKER_BOX).breakByTool(FabricToolTags.PICKAXES).build()));
 	public static final BlockEntityType<EnderShulkerBlockEntity> ENDER_SHULKER_BLOCK_ENTITY = register("ender_shulker_box", EnderShulkerBlockEntity::new, ENDER_SHULKER_BLOCK);
-	public static final Item ENDER_SHULKER_ITEM = register("ender_shulker_box", new DyeableBlockItem(ENDER_SHULKER_BLOCK, new Item.Settings().group(ItemGroup.DECORATIONS)));
+	public static final Item ENDER_SHULKER_ITEM = register("ender_shulker_box", new DyeableBlockItem(ENDER_SHULKER_BLOCK, new Item.Settings().maxCount(1).group(ItemGroup.DECORATIONS)));
 	public static final Item ENDER_SHULKER_BINDER = register("ender_shulker_binder", new EnderShulkerBinderItem(new Item.Settings().group(ItemGroup.MISC)));
 	public static final Item ENDER_SHULKER_LOCK = register("ender_shulker_lock", new EnderShulkerLockItem(new Item.Settings().group(ItemGroup.MISC)));
 

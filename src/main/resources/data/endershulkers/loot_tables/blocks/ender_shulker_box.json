@@ -8,6 +8,10 @@
           "type": "minecraft:item",
           "functions": [
             {
+              "function": "minecraft:copy_name",
+              "source": "block_entity"
+            },
+            {
               "function": "minecraft:copy_nbt",
               "source": "block_entity",
               "ops": [
@@ -24,6 +28,11 @@
                 {
                   "source": "OwnerLeast",
                   "target": "BlockEntityTag.OwnerLeast",
+                  "op": "replace"
+                },
+                {
+                  "source": "Locked",
+                  "target": "BlockEntityTag.Locked",
                   "op": "replace"
                 }
               ]
