@@ -1,8 +1,11 @@
 {
   "block.endershulkers.ender_shulker_box": "Ender Shulker Box",
+  "item.endershulkers.ender_shulker_lock": "Ender Shulker Lock",
+  "item.endershulkers.ender_shulker_binder": "Ender Shulker Binder",
   "title.endershulkers.ender_shulker": "Ender Shulker - #%s",
   "tooltip.endershulkers.channel": "Channel #%s",
-  "tooltip.endershulkers.owner": "Owned by %s",
+  "tooltip.endershulkers.owned.me": "Owned by me",
+  "tooltip.endershulkers.owned.else": "Owned by someone else",
   "tooltip.endershulkers.locked": "Locked",
   "msg.endershulkers.locked": "Ender Shulker is locked by its owner!"
 }

@@ -12,6 +12,7 @@ import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.ShulkerBoxBlockEntity;
 import net.minecraft.block.piston.PistonBehavior;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.container.Container;
 import net.minecraft.entity.EntityContext;
@@ -44,10 +45,7 @@ import space.bbkr.endershulkers.block.entity.EnderShulkerBlockEntity;
 import space.bbkr.endershulkers.inventory.EnderShulkerInventory;
 
 import javax.annotation.Nullable;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 public class EnderShulkerBlock extends BlockWithEntity implements BlockComponentProvider {
 	public static final EnumProperty<Direction> FACING = FacingBlock.FACING;
@@ -128,10 +126,12 @@ public class EnderShulkerBlock extends BlockWithEntity implements BlockComponent
 		}
 		CompoundTag beTag = stack.getOrCreateSubTag("BlockEntityTag");
 		if (beTag.containsUuid("Owner")) {
-			CompoundTag newTag = new CompoundTag();
-			newTag.putString("Id", beTag.getUuid("Owner").toString());
-			GameProfile profile = NbtHelper.toGameProfile(newTag);
-			tooltip.add(new TranslatableText("tooltip.endershulkers.owner", profile.getName()).formatted(Formatting.GRAY));
+			UUID id = beTag.getUuid("Owner");
+			if (id.equals(MinecraftClient.getInstance().player.getUuid())) {
+				tooltip.add(new TranslatableText("tooltip.endershulkers.owned.me").formatted(Formatting.GRAY));
+			} else {
+				tooltip.add(new TranslatableText("tooltip.endershulkers.owned.else").formatted(Formatting.GRAY)); //TODO: is UUID username lookup at all feasible?
+			}
 		}
 		if (beTag.getBoolean("Locked")) tooltip.add(new TranslatableText("tooltip.endershulkers.locked").formatted(Formatting.GRAY));
 	}
@@ -169,6 +169,7 @@ public class EnderShulkerBlock extends BlockWithEntity implements BlockComponent
 				CompoundTag tag = stack.getOrCreateSubTag("BlockEntityTag");
 				tag.putInt("Channel", shulker.getColor());
 				if (shulker.getOwnerId() != null)  tag.putUuid("Owner", shulker.getOwnerId());
+				tag.putBoolean("Locked", shulker.isLocked());
 
 				if (shulker.hasCustomName()) {
 					stack.setCustomName(shulker.getCustomName());

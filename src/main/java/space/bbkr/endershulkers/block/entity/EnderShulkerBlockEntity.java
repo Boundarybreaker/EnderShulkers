@@ -92,7 +92,7 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 
 	public void setOwnerId(UUID ownerId) {
 		this.ownerId = ownerId;
-		sync();
+		if (world != null && !world.isClient) sync();
 	}
 
 	public void removeOwnerId() {
@@ -145,7 +145,8 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 
 	public void setCustomName(Text name) {
 		if (ownerId == null) {
-
+			this.customName = name;
+			if (world != null && !world.isClient) sync();
 		} else {
 			getInventoryAlways().setCustomName(name);
 		}
@@ -157,7 +158,7 @@ public class EnderShulkerBlockEntity extends BlockEntity implements Tickable, Bl
 
 	public void setLocked(boolean locked) {
 		this.locked = locked;
-		if (!world.isClient) sync();
+		if (world != null && !world.isClient) sync();
 	}
 
 	@Nullable
