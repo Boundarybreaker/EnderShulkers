@@ -26,6 +26,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtHelper;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.stat.Stats;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.EnumProperty;
@@ -87,6 +89,13 @@ public class EnderShulkerBlock extends BlockWithEntity implements BlockComponent
 				}
 
 				if (canOpen) {
+					if (shulker.isLocked()) {
+						if (shulker.getOwnerId() != null && !shulker.getOwnerId().equals(player.getUuid())) {
+							player.addChatMessage(new TranslatableText("container.isLocked", shulker.getName()), true);
+							world.playSound(null, pos, SoundEvents.BLOCK_CHEST_LOCKED, SoundCategory.BLOCKS, 1f, 1f);
+							return ActionResult.SUCCESS;
+						}
+					}
 					EnderShulkers.ENDER_SHULKER_COMPONENT.get(world.getLevelProperties()).getInventory(shulker.getOwnerId(), shulker.getColor()).setCurrentBlockEntity(shulker);
 					player.openContainer(shulker);
 					player.incrementStat(Stats.OPEN_SHULKER_BOX);

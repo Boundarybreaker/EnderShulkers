@@ -25,6 +25,7 @@ public class EnderShulkerInventory extends SimpleInventoryComponent {
 
 	public EnderShulkerInventory() {
 		super(27);
+		this.listen(EnderShulkerComponent.INSTANCE::sync);
 	}
 
 	public void setCurrentBlockEntity(EnderShulkerBlockEntity be) {
@@ -41,7 +42,7 @@ public class EnderShulkerInventory extends SimpleInventoryComponent {
 
 	public void setCustomName(Text customName) {
 		this.customName = customName;
-		markDirty();
+		onChanged();
 	}
 
 	@Override
@@ -53,12 +54,6 @@ public class EnderShulkerInventory extends SimpleInventoryComponent {
 	@Override
 	public SidedInventory asLocalInventory(IWorld world, BlockPos pos) {
 		return new EnderShulkerWrapper(world, pos);
-	}
-
-	@Override
-	public void markDirty() {
-		super.markDirty();
-		EnderShulkerComponent.INSTANCE.sync();
 	}
 
 	@Override
@@ -135,7 +130,7 @@ public class EnderShulkerInventory extends SimpleInventoryComponent {
 
 		@Override
 		public void markDirty() {
-			inv.markDirty();
+			inv.onChanged();
 		}
 	}
 }
