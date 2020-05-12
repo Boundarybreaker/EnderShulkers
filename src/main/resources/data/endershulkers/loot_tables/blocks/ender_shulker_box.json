@@ -21,6 +21,11 @@
                   "op": "replace"
                 },
                 {
+                  "source": "Owner",
+                  "target": "BlockEntityTag.Owner",
+                  "op": "replace"
+                },
+                {
                   "source": "OwnerMost",
                   "target": "BlockEntityTag.OwnerMost",
                   "op": "replace"

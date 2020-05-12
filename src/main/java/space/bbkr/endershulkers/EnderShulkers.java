@@ -41,7 +41,7 @@ public class EnderShulkers implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		LevelComponentCallback.EVENT.register(((levelProperties, container) -> container.put(ENDER_SHULKER_COMPONENT, EnderShulkerComponent.INSTANCE)));
+		LevelComponentCallback.EVENT.register((levelProperties, container) -> container.put(ENDER_SHULKER_COMPONENT, EnderShulkerComponent.INSTANCE));
 	}
 
 	private static Block register(String name, Block block) {
